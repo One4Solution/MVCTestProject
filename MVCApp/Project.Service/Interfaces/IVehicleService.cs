@@ -11,5 +11,13 @@ namespace Project.Service.Interfaces
         Task<List<VehicleMake>> GetVehicleMakeAsync();
 
         Task CreateVehicleMakeAsync(VehicleMake vehicleMake);
+
+        Task<VehicleMake> GetVehicleMakeByIdAsync(int? id);
+
+        Task UpdateVehicleMakeAsync(VehicleMake vehicleMake);
+
+        Task<bool> CheckVehicleMakeAsync(int id);
+
+        Task DeleteVehicleMakeAsync(int id);
     }
 }

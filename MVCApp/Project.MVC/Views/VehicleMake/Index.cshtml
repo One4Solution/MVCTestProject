@@ -1,0 +1,50 @@
+﻿@model IEnumerable<Project.MVC.Models.VehicleMakeViewModel>
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+
+<div>
+    <p>
+        <a asp-action="Create" asp-controller="VehicleMake" class="btn btn-primary">Create</a>
+    </p>
+</div>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Abbreviation)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Abbreviation)
+                </td>
+
+                <td>
+                    @*<button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("Edit", "Car")/'+@item.CarId" >Edit</button>*@
+                    <a asp-action="Edit" asp-route-id="@item.Id"><i class="far fa-edit fa-lg"></i></a> |
+                    @*<a asp-action="Details" asp-route-id="@item.Id"><i class="fas fa-clipboard fa-lg"></i></a> |*@
+                    <a asp-action="Delete" asp-route-id="@item.Id"><i class="fas fa-eraser fa-lg"></i></a>
+                </td>
+            </tr>
+        }
+
+    </tbody>
+</table>
+
