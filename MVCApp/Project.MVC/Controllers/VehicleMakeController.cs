@@ -6,6 +6,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project.MVC.Models;
+using Project.Service.DataContext;
 using Project.Service.Interfaces;
 using Project.Service.Models;
 using Project.Service.Services;
@@ -16,19 +17,39 @@ namespace Project.MVC.Controllers
     {
         private readonly IVehicleService _service;
         private readonly IMapper _mapper;
+        private readonly CarContext _db;
 
-        public VehicleMakeController(IVehicleService service, IMapper mapper)
+        public VehicleMakeController(IVehicleService service, IMapper mapper, CarContext carContext)
         {
             _service = service;
             _mapper = mapper;
+            _db = carContext;
         }
 
         // method to list all vehicles
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder)
         {
             var result = await _service.GetVehicleMakeAsync();
+
             var vehicles = _mapper.Map<List<VehicleMakeViewModel>>(result);
+
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["AbrvSortParm"] = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    vehicles = vehicles.OrderByDescending(x => x.Name).ToList();
+                    break;
+
+                case "abrv_desc":
+                    vehicles = vehicles.OrderByDescending(x => x.Abbreviation).ToList();
+                    break;
+
+                default:
+                    vehicles = vehicles.OrderBy(x => x.Name).ToList();
+                    break;
+            }
 
             return View(vehicles);
         }

@@ -18,9 +18,11 @@
         <tr>
             <th>
                 @Html.DisplayNameFor(model => model.Name)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]"><i class="fas fa-sort fa-lg"></i></a>
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Abbreviation)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["AbrvSortParm"]"><i class="fas fa-sort fa-lg"></i></a>
             </th>
         </tr>
     </thead>
