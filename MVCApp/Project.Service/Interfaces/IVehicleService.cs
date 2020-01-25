@@ -8,6 +8,7 @@ namespace Project.Service.Interfaces
 {
     public interface IVehicleService
     {
+        // Make
         Task<List<VehicleMake>> GetVehicleMakeAsync();
 
         Task CreateVehicleMakeAsync(VehicleMake vehicleMake);
@@ -19,5 +20,24 @@ namespace Project.Service.Interfaces
         Task<bool> CheckVehicleMakeAsync(int id);
 
         Task DeleteVehicleMakeAsync(int id);
+
+
+
+
+        //Model
+        Task<List<VehicleModel>> GetVehicleModelAsync();
+
+        Task CreateVehicleModelAsync(VehicleModel vehicleModel);
+
+        Task<VehicleModel> GetVehicleModelByIdAsync(int? id);
+
+        Task UpdateVehicleModelAsync(VehicleModel vehicleMake);
+
+        Task<bool> CheckVehicleModelAsync(int id);
+
+        Task DeleteVehicleModelAsync(int id);
+
+
+
     }
 }

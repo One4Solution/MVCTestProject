@@ -10,36 +10,39 @@ using Project.MVC.Models;
 using Project.Service.DataContext;
 using Project.Service.Interfaces;
 using Project.Service.Models;
-using Project.Service.Services;
 
 namespace Project.MVC.Controllers
 {
-    public class VehicleMakeController : Controller
+    public class VehicleModelController : Controller
     {
         private readonly IVehicleService _service;
         private readonly IMapper _mapper;
 
-        public VehicleMakeController(IVehicleService service, IMapper mapper, CarContext carContext)
+        public VehicleMakeViewModel VehicleMakeSelected { get; set; }
+
+        public VehicleModelController(IVehicleService service, IMapper mapper )
         {
             _service = service;
             _mapper = mapper;
         }
 
-        // method to list all vehicle makes
+
+        // method to list all vehicle models
         [HttpGet]
-        public async Task<IActionResult> Index([Bind("PageSize")] VehicleMakeViewModel vehicleMake, string sortOrder, string currentFilter, string searchString, string clearSearch, int? pageNumber, string test )
+        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, string clearSearch, int? pageNumber, string test)
         {
-            var result = await _service.GetVehicleMakeAsync();
+            var result = await _service.GetVehicleModelAsync();
 
-            var vehicles = _mapper.Map<List<VehicleMakeViewModel>>(result);
+            var vehicles = _mapper.Map<List<VehicleModelViewModel>>(result);
 
-            var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber, vehicleMake.PageSize);
+            var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber);
 
-            return View(finalView );
+            return View(finalView);
         }
 
-        // help method to return list of VehicleMakeViewModel with pagination
-        public Pagination<VehicleMakeViewModel> PaginationAndSorting(string sortOrder, string currentFilter, string searchString, string clearSearch, List<VehicleMakeViewModel> vehicles, int? pageNumber, int pageSize = 2)
+
+        // help method to return list of VehicleModelViewModel with pagination
+        public Pagination<VehicleModelViewModel> PaginationAndSorting(string sortOrder, string currentFilter, string searchString, string clearSearch, List<VehicleModelViewModel> vehicles, int? pageNumber)
         {
             ViewData["CurrentSort"] = sortOrder;
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
@@ -77,33 +80,42 @@ namespace Project.MVC.Controllers
                     break;
             }
 
-            pageSize = 4;
-            return Pagination<VehicleMakeViewModel>.Create(vehicles, pageNumber ?? 1, pageSize);
+            int pageSize = 4;
+            return Pagination<VehicleModelViewModel>.Create(vehicles, pageNumber ?? 1, pageSize);
         }
-
 
 
 
         // method to show page to create vehicle
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var vehicleMake = await _service.GetVehicleMakeAsync();
+            var vehicleModelViewModel = new VehicleModelViewModel();
+            vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake);
+
+
+            return View(vehicleModelViewModel);
         }
 
         // method to create new vehicle
         [HttpPost]
-        public async Task<IActionResult> Create([Bind("Id, Name, Abbreviation")] VehicleMakeViewModel vehicleMakeViewModel)
+        public async Task<IActionResult> Create([Bind("Id, Name, Abbreviation, VehicleMakeId")] VehicleModelViewModel vehicleModelViewModel)
         {
             if (ModelState.IsValid)
             {
-                var vehicle = _mapper.Map<VehicleMake>(vehicleMakeViewModel);
-                await _service.CreateVehicleMakeAsync(vehicle);
+                var vehicle = _mapper.Map<VehicleModel>(vehicleModelViewModel);
+                await _service.CreateVehicleModelAsync(vehicle);
+                //var vehicleMake = await _service.GetVehicleMakeAsync();
+                //vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake);
+
                 return RedirectToAction("Index");
             }
-            return View(vehicleMakeViewModel);
+            return View(vehicleModelViewModel);
 
         }
+
+
 
 
 
@@ -113,8 +125,8 @@ namespace Project.MVC.Controllers
             if (id == null)
                 return NotFound();
 
-            var result = await _service.GetVehicleMakeByIdAsync(id);
-            var vehicle = _mapper.Map<VehicleMakeViewModel>(result);
+            var result = await _service.GetVehicleModelByIdAsync(id);
+            var vehicle = _mapper.Map<VehicleModelViewModel>(result);
 
             return View(vehicle);
         }
@@ -122,21 +134,21 @@ namespace Project.MVC.Controllers
 
         // method to edit selected vehicle
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, [Bind("Id, Name, Abbreviation")] VehicleMakeViewModel vehicleMakeViewModel)
+        public async Task<IActionResult> Edit(int id, [Bind("Id, Name, Abbreviation, VehicleMakeId")] VehicleModelViewModel vehicleModelViewModel)
         {
-            if (id != vehicleMakeViewModel.Id)
+            if (id != vehicleModelViewModel.Id)
                 return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var vehicle = _mapper.Map<VehicleMake>(vehicleMakeViewModel);
-                    await _service.UpdateVehicleMakeAsync(vehicle);
+                    var vehicle = _mapper.Map<VehicleModel>(vehicleModelViewModel);
+                    await _service.UpdateVehicleModelAsync(vehicle);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!await _service.CheckVehicleMakeAsync(vehicleMakeViewModel.Id))
+                    if (!await _service.CheckVehicleModelAsync(vehicleModelViewModel.Id))
                         return NotFound();
                     else
                         throw;
@@ -144,37 +156,37 @@ namespace Project.MVC.Controllers
                 return RedirectToAction("Index");
             }
 
-            return View(vehicleMakeViewModel);
+            return View(vehicleModelViewModel);
         }
 
 
-        // method to get vehicle make to delete 
+
+
+        // method to get vehicle model to delete 
         [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
                 return NotFound();
 
-            var result = await _service.GetVehicleMakeByIdAsync(id);
+            var result = await _service.GetVehicleModelByIdAsync(id);
 
             if (result == null)
                 return NotFound();
-            
-            var vehicle = _mapper.Map<VehicleMakeViewModel>(result);
+
+            var vehicle = _mapper.Map<VehicleModelViewModel>(result);
 
             return View(vehicle);
 
         }
 
-        // method to delete vehicle make
+        // method to delete vehicle model
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
-            await _service.DeleteVehicleMakeAsync(id);
+            await _service.DeleteVehicleModelAsync(id);
             return RedirectToAction("Index");
-
         }
-
 
 
 

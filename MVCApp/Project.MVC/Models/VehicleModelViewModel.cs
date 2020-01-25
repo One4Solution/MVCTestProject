@@ -12,6 +12,9 @@ namespace Project.MVC.Models
         public string Name { get; set; }
         public string Abbreviation { get; set; }
 
-        public VehicleMakeViewModel VehicleMake { get; set; }
+
+        public int VehicleMakeId { get; set; }
+        // public VehicleMakeViewModel VehicleMake { get; set; }
+        public IEnumerable<VehicleMakeViewModel> vehicleMakeModels { get; set; }
     }
 }

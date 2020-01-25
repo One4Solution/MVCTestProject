@@ -1,5 +1,5 @@
 ﻿@*@model IEnumerable<Project.MVC.Models.VehicleMakeViewModel>*@
-@model Project.MVC.HelpClasses.Pagination<VehicleMakeViewModel>
+@model  Project.MVC.HelpClasses.Pagination<VehicleModelViewModel>
 @{
     ViewData["Title"] = "Index";
 }
@@ -9,7 +9,7 @@
 
 <div>
     <p>
-        <a asp-action="Create" asp-controller="VehicleMake" class="btn btn-primary">Create</a>
+        <a asp-action="Create" asp-controller="VehicleModel" class="btn btn-primary">Create</a>
     </p>
 </div>
 
@@ -23,7 +23,7 @@
             <input type="text" name="SearchString" value="@ViewData["SearchFilter"]" />
             <input type="submit" value="Search" class="btn btn-secondary" /> |
             <input type="submit" value="Clear" class="btn btn-secondary @clearDisabled" name="clearSearch" />
-            <select id="selection" asp-action="Index">
+            <select id="selection" @*asp-for=""*@ asp-action="Index">
                 <option value="2" name="test">2</option>
                 <option value="4" name="test">4</option>
                 <option value="8" name="test">8</option>
@@ -51,21 +51,25 @@
     <tbody>
         @foreach (var item in Model)
         {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Abbreviation)
-                </td>
+        <tr>
+            <td>
+                Create filter by Vehicle Make
+                @Html.DisplayFor(modelItem => item.VehicleMakeId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Abbreviation)
+            </td>
 
-                <td>
-                    @*<button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("Edit", "Car")/'+@item.CarId" >Edit</button>*@
-                    <a asp-action="Edit" asp-route-id="@item.Id"><i class="far fa-edit fa-lg"></i></a> |
-                    @*<a asp-action="Details" asp-route-id="@item.Id"><i class="fas fa-clipboard fa-lg"></i></a> |*@
-                    <a asp-action="Delete" asp-route-id="@item.Id"><i class="fas fa-eraser fa-lg"></i></a>
-                </td>
-            </tr>
+            <td>
+                @*<button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("Edit", "Car")/'+@item.CarId" >Edit</button>*@
+                <a asp-action="Edit" asp-route-id="@item.Id"><i class="far fa-edit fa-lg"></i></a> |
+                @*<a asp-action="Details" asp-route-id="@item.Id"><i class="fas fa-clipboard fa-lg"></i></a> |*@
+                <a asp-action="Delete" asp-route-id="@item.Id"><i class="fas fa-eraser fa-lg"></i></a>
+            </td>
+        </tr>
         }
     </tbody>
 </table>

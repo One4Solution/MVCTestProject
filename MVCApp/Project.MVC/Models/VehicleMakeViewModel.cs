@@ -12,6 +12,8 @@ namespace Project.MVC.Models
         public string Name { get; set; }
         public string Abbreviation { get; set; }
 
+        public int PageSize { get; set; }
+
         public ICollection<VehicleModelViewModel> VehicleModels { get; set; }
     }
 }

@@ -10,8 +10,11 @@ namespace Project.MVC.Interfaces
     {
         int Id { get; set; }
         string Name { get; set; }
-        string Abbreviation { get; set; } 
+        string Abbreviation { get; set; }
 
-        VehicleMakeViewModel VehicleMake { get; set; }
+
+        public int VehicleMakeId { get; set; }
+
+        //  VehicleMakeViewModel VehicleMake { get; set; }
     }
 }
