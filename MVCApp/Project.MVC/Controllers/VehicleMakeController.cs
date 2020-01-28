@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Project.MVC.HelpClasses;
 using Project.MVC.Models;
@@ -18,6 +19,8 @@ namespace Project.MVC.Controllers
     {
         private readonly IVehicleService _service;
         private readonly IMapper _mapper;
+        private static string _currentVehicleMakeName;
+        private static int _currentPageSize = 0;
 
         public VehicleMakeController(IVehicleService service, IMapper mapper, CarContext carContext)
         {
@@ -25,21 +28,31 @@ namespace Project.MVC.Controllers
             _mapper = mapper;
         }
 
+        public IActionResult SetPageSize(int pageSize = 4)
+        {
+            _currentPageSize = pageSize;
+            ViewData["SlectionPageSize"] = _currentPageSize;
+            return RedirectToAction("Index");
+        }
+
         // method to list all vehicle makes
         [HttpGet]
-        public async Task<IActionResult> Index([Bind("PageSize")] VehicleMakeViewModel vehicleMake, string sortOrder, string currentFilter, string searchString, string clearSearch, int? pageNumber, string test )
+        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, string clearSearch, int? pageNumber, int pageSize = 4)
         {
+            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
+            ViewData["SlectionPageSize"] = _currentPageSize > 0 ? _currentPageSize : pageSize;
+
             var result = await _service.GetVehicleMakeAsync();
 
             var vehicles = _mapper.Map<List<VehicleMakeViewModel>>(result);
 
-            var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber, vehicleMake.PageSize);
+            var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber, pageSize);
 
-            return View(finalView );
+            return View(finalView);
         }
 
         // help method to return list of VehicleMakeViewModel with pagination
-        public Pagination<VehicleMakeViewModel> PaginationAndSorting(string sortOrder, string currentFilter, string searchString, string clearSearch, List<VehicleMakeViewModel> vehicles, int? pageNumber, int pageSize = 2)
+        public Pagination<VehicleMakeViewModel> PaginationAndSorting(string sortOrder, string currentFilter, string searchString, string clearSearch, List<VehicleMakeViewModel> vehicles, int? pageNumber, int pageSize)
         {
             ViewData["CurrentSort"] = sortOrder;
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
@@ -77,7 +90,6 @@ namespace Project.MVC.Controllers
                     break;
             }
 
-            pageSize = 4;
             return Pagination<VehicleMakeViewModel>.Create(vehicles, pageNumber ?? 1, pageSize);
         }
 
@@ -97,6 +109,15 @@ namespace Project.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                ViewBag.ErrorMessage = ""; // display message depends on name existing
+                // check if model name already exists in db for vehicle brand (make)
+                var alreadyExists = await _service.GetVehicleMakeByNameAsync(vehicleMakeViewModel.Name);
+                if (alreadyExists != null)
+                {
+                    ViewBag.ErrorMessage = "Name " + vehicleMakeViewModel.Name.ToString() + " already exists";
+                    return View(vehicleMakeViewModel);
+                }
+
                 var vehicle = _mapper.Map<VehicleMake>(vehicleMakeViewModel);
                 await _service.CreateVehicleMakeAsync(vehicle);
                 return RedirectToAction("Index");
@@ -106,7 +127,7 @@ namespace Project.MVC.Controllers
         }
 
 
-
+        // method to show edit page
         [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -115,6 +136,8 @@ namespace Project.MVC.Controllers
 
             var result = await _service.GetVehicleMakeByIdAsync(id);
             var vehicle = _mapper.Map<VehicleMakeViewModel>(result);
+
+            _currentVehicleMakeName = vehicle.Name; // save current vehicle name on edit 
 
             return View(vehicle);
         }
@@ -129,6 +152,15 @@ namespace Project.MVC.Controllers
 
             if (ModelState.IsValid)
             {
+                ViewBag.ErrorMessage = "";
+                // check if model name already exists in db for vehicle brand (make)
+                var alreadyExists = await _service.GetVehicleMakeByNameAsync(vehicleMakeViewModel.Name);
+                if (alreadyExists != null && _currentVehicleMakeName != alreadyExists.Name)
+                {
+                    ViewBag.ErrorMessage = "Name " + vehicleMakeViewModel.Name.ToString() + " already exists";
+                    return View(vehicleMakeViewModel);
+                }
+
                 try
                 {
                     var vehicle = _mapper.Map<VehicleMake>(vehicleMakeViewModel);
@@ -141,6 +173,7 @@ namespace Project.MVC.Controllers
                     else
                         throw;
                 }
+
                 return RedirectToAction("Index");
             }
 
@@ -159,7 +192,7 @@ namespace Project.MVC.Controllers
 
             if (result == null)
                 return NotFound();
-            
+
             var vehicle = _mapper.Map<VehicleMakeViewModel>(result);
 
             return View(vehicle);

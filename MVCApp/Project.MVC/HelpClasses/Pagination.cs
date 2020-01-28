@@ -11,6 +11,8 @@ namespace Project.MVC.HelpClasses
         public int PageIndex { get; set; }
         public int TotalPages { get; set; }
 
+        public int PageSize { get; set; }
+
         public Pagination(List<T> items, int count, int pageIndex, int pageSize)
         {
             PageIndex = pageIndex;

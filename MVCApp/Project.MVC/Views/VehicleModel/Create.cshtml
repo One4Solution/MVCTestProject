@@ -4,9 +4,7 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
-
-<h4>Vehicle</h4>
+<h4>Create new vehicle model</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -19,11 +17,12 @@
                     <option value="" selected disabled>-- Select vehicle make --</option>
                 </select>
             </div>
-            <input type="hidden" asp-for="vehicleMakeModels" />
+            @*<input type="hidden" asp-for="vehicleMakeModels" />*@
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
                 <input asp-for="Name" class="form-control" required />
                 <span asp-validation-for="Name" class="text-danger"></span>
+                <span class="text-danger">@ViewBag.ErrorMessage</span>
             </div>
             <div class="form-group">
                 <label asp-for="Abbreviation" class="control-label"></label>
@@ -31,15 +30,16 @@
                 <span asp-validation-for="Abbreviation" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <a asp-action="Index" class="btn btn-info">Back to List</a> |
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+@*<div>
+        <a asp-action="Index">Back to List</a>
+    </div>*@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

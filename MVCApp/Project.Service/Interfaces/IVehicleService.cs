@@ -15,6 +15,8 @@ namespace Project.Service.Interfaces
 
         Task<VehicleMake> GetVehicleMakeByIdAsync(int? id);
 
+        Task<VehicleMake> GetVehicleMakeByNameAsync(string name);
+
         Task UpdateVehicleMakeAsync(VehicleMake vehicleMake);
 
         Task<bool> CheckVehicleMakeAsync(int id);
@@ -30,6 +32,8 @@ namespace Project.Service.Interfaces
         Task CreateVehicleModelAsync(VehicleModel vehicleModel);
 
         Task<VehicleModel> GetVehicleModelByIdAsync(int? id);
+
+        Task<VehicleModel> GetVehicleModelByNameAsync(string name);
 
         Task UpdateVehicleModelAsync(VehicleModel vehicleMake);
 

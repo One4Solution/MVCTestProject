@@ -17,8 +17,10 @@ namespace Project.MVC.Controllers
     {
         private readonly IVehicleService _service;
         private readonly IMapper _mapper;
+        private static string _currentVehicleModelName;
+        private static int _currentPageSize = 0;
 
-        public VehicleMakeViewModel VehicleMakeSelected { get; set; }
+        // public VehicleMakeViewModel VehicleMakeSelected { get; set; }
 
         public VehicleModelController(IVehicleService service, IMapper mapper )
         {
@@ -26,23 +28,33 @@ namespace Project.MVC.Controllers
             _mapper = mapper;
         }
 
+        public IActionResult SetPageSize(int pageSize = 4)
+        {
+            _currentPageSize = pageSize;
+            ViewData["SlectionPageSize"] = _currentPageSize;
+            return RedirectToAction("Index");
+        }
+
 
         // method to list all vehicle models
         [HttpGet]
-        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, string clearSearch, int? pageNumber, string test)
+        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, string clearSearch, int? pageNumber, int pageSize = 4)
         {
+            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
+            ViewData["SlectionPageSize"] = _currentPageSize > 0 ? _currentPageSize : pageSize;
+
             var result = await _service.GetVehicleModelAsync();
 
             var vehicles = _mapper.Map<List<VehicleModelViewModel>>(result);
 
-            var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber);
+            var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber, pageSize);
 
             return View(finalView);
         }
 
 
         // help method to return list of VehicleModelViewModel with pagination
-        public Pagination<VehicleModelViewModel> PaginationAndSorting(string sortOrder, string currentFilter, string searchString, string clearSearch, List<VehicleModelViewModel> vehicles, int? pageNumber)
+        public Pagination<VehicleModelViewModel> PaginationAndSorting(string sortOrder, string currentFilter, string searchString, string clearSearch, List<VehicleModelViewModel> vehicles, int? pageNumber, int pageSize)
         {
             ViewData["CurrentSort"] = sortOrder;
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
@@ -62,7 +74,8 @@ namespace Project.MVC.Controllers
             }
 
             if (!String.IsNullOrEmpty(searchString))
-                vehicles = vehicles.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.Abbreviation.ToLower().Contains(searchString.ToLower())).ToList();
+                vehicles = vehicles.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.Abbreviation.ToLower().Contains(searchString.ToLower()) 
+                || x.VehicleMake.Name.ToLower().Contains(searchString.ToLower())).ToList();
 
 
             switch (sortOrder)
@@ -80,7 +93,6 @@ namespace Project.MVC.Controllers
                     break;
             }
 
-            int pageSize = 4;
             return Pagination<VehicleModelViewModel>.Create(vehicles, pageNumber ?? 1, pageSize);
         }
 
@@ -94,7 +106,6 @@ namespace Project.MVC.Controllers
             var vehicleModelViewModel = new VehicleModelViewModel();
             vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake);
 
-
             return View(vehicleModelViewModel);
         }
 
@@ -104,21 +115,29 @@ namespace Project.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                ViewBag.ErrorMessage = ""; // display message depends on name existing
+                // check if model name already exists in db for vehicle brand (make)
+                var alreadyExists = await _service.GetVehicleModelByNameAsync(vehicleModelViewModel.Name);
+                if (alreadyExists != null)
+                {
+                    ViewBag.ErrorMessage = "Name " + vehicleModelViewModel.Name.ToString() + " already exists";
+                    var vehicleMake = await _service.GetVehicleMakeAsync();
+                    vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake);
+                    return View(vehicleModelViewModel);
+                }
+
                 var vehicle = _mapper.Map<VehicleModel>(vehicleModelViewModel);
                 await _service.CreateVehicleModelAsync(vehicle);
-                //var vehicleMake = await _service.GetVehicleMakeAsync();
-                //vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake);
 
                 return RedirectToAction("Index");
             }
             return View(vehicleModelViewModel);
-
         }
 
 
 
 
-
+        // method to show edit page
         [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -127,6 +146,8 @@ namespace Project.MVC.Controllers
 
             var result = await _service.GetVehicleModelByIdAsync(id);
             var vehicle = _mapper.Map<VehicleModelViewModel>(result);
+
+            _currentVehicleModelName = vehicle.Name;
 
             return View(vehicle);
         }
@@ -141,6 +162,15 @@ namespace Project.MVC.Controllers
 
             if (ModelState.IsValid)
             {
+                ViewBag.ErrorMessage = "";
+                // check if model name already exists in db for vehicle brand (make)
+                var alreadyExists = await _service.GetVehicleModelByNameAsync(vehicleModelViewModel.Name);
+                if (alreadyExists != null && _currentVehicleModelName != alreadyExists.Name)
+                {
+                    ViewBag.ErrorMessage = "Name " + vehicleModelViewModel.Name.ToString() + " already exists";
+                    return View(vehicleModelViewModel);
+                }
+
                 try
                 {
                     var vehicle = _mapper.Map<VehicleModel>(vehicleModelViewModel);

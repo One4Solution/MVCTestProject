@@ -42,6 +42,14 @@ namespace Project.Service.Services
         }
 
 
+        // method to get vehicle make by name
+        public async Task<VehicleMake> GetVehicleMakeByNameAsync(string name)
+        {
+            // return vehicle make model if exists, also with setup notracking _db context
+            return await _dbCarContext.VehicleMake.AsNoTracking().Where(x => x.Name.ToLower() == name.ToLower()).FirstOrDefaultAsync();
+        }
+
+
 
         // method to update current vehicle make
         public async Task UpdateVehicleMakeAsync(VehicleMake vehicleMake)
@@ -81,7 +89,14 @@ namespace Project.Service.Services
         // method to return list of vehicle models
         public async Task<List<VehicleModel>> GetVehicleModelAsync()
         {
-            return await _dbCarContext.VehicleModel.ToListAsync();
+            var vehicleModels = await _dbCarContext.VehicleModel.ToListAsync();
+
+            foreach (var vehicleModel in vehicleModels)
+            {
+                vehicleModel.VehicleMake = await GetVehicleMakeByIdAsync(vehicleModel.VehicleMakeId);
+            }
+
+            return vehicleModels;
         }
 
 
@@ -99,6 +114,13 @@ namespace Project.Service.Services
         {
             var vehicle = await _dbCarContext.VehicleModel.FindAsync(id);
             return vehicle;
+        }
+
+        // method to get vehicle make by name
+        public async Task<VehicleModel> GetVehicleModelByNameAsync(string name)
+        {
+            // return vehicle make model if exists, also with setup notracking _db context
+            return await _dbCarContext.VehicleModel.AsNoTracking().Where(x => x.Name.ToLower() == name.ToLower()).FirstOrDefaultAsync();
         }
 
 
