@@ -22,7 +22,7 @@ namespace Project.Service.Services
         // method to return list of vehicle makes
         public async Task<List<VehicleMake>> GetVehicleMakeAsync()
         {
-            return await _dbCarContext.VehicleMake.ToListAsync();
+            return await _dbCarContext.VehicleMake.AsNoTracking().ToListAsync();
         }
 
 
@@ -61,7 +61,7 @@ namespace Project.Service.Services
         // method to check if vehicle make by id exists
         public async Task<bool> CheckVehicleMakeAsync(int id)
         {
-            return await _dbCarContext.VehicleMake.AnyAsync(x => x.Id == id);
+            return await _dbCarContext.VehicleMake.AsNoTracking().AnyAsync(x => x.Id == id);
         }
 
 
@@ -89,7 +89,7 @@ namespace Project.Service.Services
         // method to return list of vehicle models
         public async Task<List<VehicleModel>> GetVehicleModelAsync()
         {
-            var vehicleModels = await _dbCarContext.VehicleModel.ToListAsync();
+            var vehicleModels = await _dbCarContext.VehicleModel.AsNoTracking().ToListAsync();
 
             foreach (var vehicleModel in vehicleModels)
             {
@@ -127,7 +127,7 @@ namespace Project.Service.Services
         // method to get vehicle model by vehicle make id ## used for deleting models in the same time with vehicle brand (make)
         public async Task<bool> CheckIfExistsVehicleModelByMakeIdAsync(int? vehicleMakeId)
         {
-            var vehicle = await _dbCarContext.VehicleModel.Where(x => x.VehicleMakeId == vehicleMakeId).AnyAsync();
+            var vehicle = await _dbCarContext.VehicleModel.AsNoTracking().Where(x => x.VehicleMakeId == vehicleMakeId).AnyAsync();
             return vehicle;
         }
 
@@ -144,7 +144,7 @@ namespace Project.Service.Services
         // method to check if vehicle make by id exists
         public async Task<bool> CheckVehicleModelAsync(int id)
         {
-            return await _dbCarContext.VehicleModel.AnyAsync(x => x.Id == id);
+            return await _dbCarContext.VehicleModel.AsNoTracking().AnyAsync(x => x.Id == id);
         }
 
 

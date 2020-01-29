@@ -33,6 +33,7 @@ namespace Project.MVC
             options.UseSqlServer(Configuration.GetConnectionString("CarDB")));
             services.AddTransient<IVehicleService, VehicleService>();
             services.AddAutoMapper(typeof(Startup));
+            services.AddCloudscribePagination();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

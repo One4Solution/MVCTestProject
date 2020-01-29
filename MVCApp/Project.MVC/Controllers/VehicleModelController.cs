@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using cloudscribe.Pagination.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project.MVC.HelpClasses;
@@ -19,10 +20,10 @@ namespace Project.MVC.Controllers
         private readonly IMapper _mapper;
         private static string _currentVehicleModelName;
         private static int _currentPageSize = 0;
-
+        SearchSortExClass searchSortParams = new SearchSortExClass();
         // public VehicleMakeViewModel VehicleMakeSelected { get; set; }
 
-        public VehicleModelController(IVehicleService service, IMapper mapper )
+        public VehicleModelController(IVehicleService service, IMapper mapper)
         {
             _service = service;
             _mapper = mapper;
@@ -31,71 +32,97 @@ namespace Project.MVC.Controllers
         public IActionResult SetPageSize(int pageSize = 4)
         {
             _currentPageSize = pageSize;
-            ViewData["SlectionPageSize"] = _currentPageSize;
+            searchSortParams.SlectionPageSize = _currentPageSize;
+            // ViewData["SlectionPageSize"] = _currentPageSize;
             return RedirectToAction("Index");
         }
 
-
         // method to list all vehicle models
         [HttpGet]
-        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, string clearSearch, int? pageNumber, int pageSize = 4)
+        public async Task<IActionResult> Index(string sortOrder, string searchString, string clearSearch, int pageNumber = 1, int pageSize = 4)
         {
-            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
-            ViewData["SlectionPageSize"] = _currentPageSize > 0 ? _currentPageSize : pageSize;
+            //pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
+            //ViewData["SlectionPageSize"] = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
             var result = await _service.GetVehicleModelAsync();
-
             var vehicles = _mapper.Map<List<VehicleModelViewModel>>(result);
 
-            var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber, pageSize);
+            //var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber, pageSize);
+            var paggedVehicles = VehiclePaginationAndSorting(sortOrder, searchString, clearSearch, pageNumber, pageSize, vehicles);
 
-            return View(finalView);
+            return View(paggedVehicles);
         }
 
-
-        // help method to return list of VehicleModelViewModel with pagination
-        public Pagination<VehicleModelViewModel> PaginationAndSorting(string sortOrder, string currentFilter, string searchString, string clearSearch, List<VehicleModelViewModel> vehicles, int? pageNumber, int pageSize)
+        // method to return pagged vehicle models
+        public (PagedResult<VehicleModelViewModel> vehicleMake, SearchSortExClass param) VehiclePaginationAndSorting(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize, List<VehicleModelViewModel> vehicleModels)
         {
-            ViewData["CurrentSort"] = sortOrder;
-            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-            ViewData["AbrvSortParm"] = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
+            //ViewData["CurrentSort"] = sortOrder;
+            //ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            //ViewData["AbrvSortParm"] = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
 
-            if (searchString != null)
-                pageNumber = 1;
-            else
-                searchString = currentFilter;
+            // define pageSize based on dropdown
+            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
-            ViewData["SearchFilter"] = searchString;
+            // save parameters
+            searchSortParams.CurrentSortOrder = sortOrder;
+            searchSortParams.SearchFilter = searchString;
+            searchSortParams.BrandSortParm = String.IsNullOrEmpty(sortOrder) ? "brand_desc" : "";
+            searchSortParams.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            searchSortParams.AbrvSortParm = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
+            searchSortParams.SlectionPageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
+
+            var excludeRecords = (pageSize * pageNumber) - pageSize; // which data will not be included
+            var totalVehicles = vehicleModels.Count();
+
+            //ViewData["SearchFilter"] = searchString;
 
             if (!String.IsNullOrEmpty(clearSearch))
             {
                 searchString = null;
-                ViewData["SearchFilter"] = null;
+                searchSortParams.SearchFilter = null;
+                // ViewData["SearchFilter"] = null;
             }
 
             if (!String.IsNullOrEmpty(searchString))
-                vehicles = vehicles.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.Abbreviation.ToLower().Contains(searchString.ToLower()) 
-                || x.VehicleMake.Name.ToLower().Contains(searchString.ToLower())).ToList();
+            {
+                vehicleModels = vehicleModels.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.Abbreviation.ToLower().Contains(searchString.ToLower())
+                 || x.VehicleMake.Name.ToLower().Contains(searchString.ToLower())).ToList();
+                totalVehicles = vehicleModels.Count();
+            }
 
 
             switch (sortOrder)
             {
                 case "name_desc":
-                    vehicles = vehicles.OrderByDescending(x => x.Name).ToList();
+                    vehicleModels = vehicleModels.OrderByDescending(x => x.Name).ToList();
                     break;
 
                 case "abrv_desc":
-                    vehicles = vehicles.OrderByDescending(x => x.Abbreviation).ToList();
+                    vehicleModels = vehicleModels.OrderByDescending(x => x.Abbreviation).ToList();
+                    break;
+
+                case "brand_desc":
+                    vehicleModels = vehicleModels.OrderByDescending(x => x.VehicleMake.Name).ToList();
                     break;
 
                 default:
-                    vehicles = vehicles.OrderBy(x => x.Name).ToList();
+                    vehicleModels = vehicleModels.OrderBy(x => x.Name).ToList();
                     break;
             }
 
-            return Pagination<VehicleModelViewModel>.Create(vehicles, pageNumber ?? 1, pageSize);
-        }
 
+            var pagedVehicles = vehicleModels.Skip(excludeRecords).Take(pageSize).ToList();
+
+            var vehicleResult = new PagedResult<VehicleModelViewModel>
+            {
+                Data = pagedVehicles,
+                TotalItems = totalVehicles,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return (vehicleResult, searchSortParams);
+        }
 
 
         // method to show page to create vehicle
@@ -105,6 +132,7 @@ namespace Project.MVC.Controllers
             var vehicleMake = await _service.GetVehicleMakeAsync();
             var vehicleModelViewModel = new VehicleModelViewModel();
             vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake.OrderBy(x => x.Name));
+            vehicleModelViewModel.ErrorMessage = "";
 
             return View(vehicleModelViewModel);
         }
@@ -115,12 +143,12 @@ namespace Project.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                ViewBag.ErrorMessage = ""; // display message depends on name existing
+                vehicleModelViewModel.ErrorMessage = ""; // display message depends on name existing
                 // check if model name already exists in db for vehicle brand (make)
                 var alreadyExists = await _service.GetVehicleModelByNameAsync(vehicleModelViewModel.Name);
                 if (alreadyExists != null)
                 {
-                    ViewBag.ErrorMessage = "Name " + vehicleModelViewModel.Name.ToString() + " already exists";
+                    vehicleModelViewModel.ErrorMessage = "Name " + vehicleModelViewModel.Name.ToString() + " already exists";
                     var vehicleMake = await _service.GetVehicleMakeAsync();
                     vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake);
                     return View(vehicleModelViewModel);
@@ -162,12 +190,12 @@ namespace Project.MVC.Controllers
 
             if (ModelState.IsValid)
             {
-                ViewBag.ErrorMessage = "";
+                vehicleModelViewModel.ErrorMessage = "";
                 // check if model name already exists in db for vehicle brand (make)
                 var alreadyExists = await _service.GetVehicleModelByNameAsync(vehicleModelViewModel.Name);
                 if (alreadyExists != null && _currentVehicleModelName != alreadyExists.Name)
                 {
-                    ViewBag.ErrorMessage = "Name " + vehicleModelViewModel.Name.ToString() + " already exists";
+                    vehicleModelViewModel.ErrorMessage = "Name " + vehicleModelViewModel.Name.ToString() + " already exists";
                     return View(vehicleModelViewModel);
                 }
 

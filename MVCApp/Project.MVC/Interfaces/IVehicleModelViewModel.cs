@@ -13,9 +13,9 @@ namespace Project.MVC.Interfaces
         string Name { get; set; }
         string Abbreviation { get; set; }
 
-
-        public int VehicleMakeId { get; set; }
-
-        //  VehicleMakeViewModel VehicleMake { get; set; }
+        string ErrorMessage { get; set; }
+        int VehicleMakeId { get; set; }
+        VehicleMakeViewModel VehicleMake { get; set; }
+        IEnumerable<VehicleMakeViewModel> vehicleMakeModels { get; set; }
     }
 }

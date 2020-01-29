@@ -20,6 +20,7 @@ namespace Project.MVC.Models
         [StringLength(15, ErrorMessage = "Abbreviation length must be between 2 and 15 characters", MinimumLength = 2)]
         public string Abbreviation { get; set; }
 
+        public string ErrorMessage { get; set; }
 
         public int VehicleMakeId { get; set; }
         public VehicleMakeViewModel VehicleMake { get; set; }

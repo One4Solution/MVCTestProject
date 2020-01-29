@@ -1,7 +1,9 @@
-﻿@*@model IEnumerable<Project.MVC.Models.VehicleMakeViewModel>*@
-@model Project.MVC.HelpClasses.Pagination<VehicleMakeViewModel>
+﻿@model ValueTuple<cloudscribe.Pagination.Models.PagedResult<VehicleMakeViewModel>, SearchSortExClass>
+
 @{
     ViewData["Title"] = "Index";
+    ViewData["Controller"] = "VehicleMake";
+    ViewData["Action"] = "Index";
 }
 
 <h3>List of Vehicle Makes</h3>
@@ -13,22 +15,21 @@
 </div>
 
 @{
-    var clearDisabled = ViewData["SearchFilter"] != null ? "" : "disabled";
-    var optionSelected = ViewData["SlectionPageSize"].ToString();
+    var clearDisabled = @Model.Item2.SearchFilter != null ? "" : "disabled";
+    var optionSelected = @Model.Item2.SlectionPageSize.ToString();
 }
 
 <form asp-action="Index" method="get">
     <div class="form-actions no-color">
         <p>
-            <input type="text" name="SearchString" value="@ViewData["SearchFilter"]" />
+            <input type="text" name="SearchString" value="@Model.Item2.SearchFilter" />
             <input type="submit" value="Search" class="btn btn-secondary" /> |
             <input type="submit" value="Clear" class="btn btn-secondary @clearDisabled" name="clearSearch" />
-            @*<select asp-for="@Model.PageSize"  asp-action="Index" onchange="location.href='@Url.Action("SetPageSize", "VehicleMake", new { pageSize = 8})'">*@
-        <select asp-for="@Model.PageSize" asp-action="Index" onchange="PageSizeValue(this,'@Url.Action("SetPageSize", "VehicleMake")')">
-            <option value="4" selected="@(optionSelected == "4")">4</option>
-            <option value="8" selected="@(optionSelected == "8")">8</option>
-            <option value="10" selected="@(optionSelected == "10")">10</option>
-        </select>
+            <select asp-for="@Model.Item1.PageSize" asp-action="Index" onchange="PageSizeValue(this,'@Url.Action("SetPageSize", "VehicleMake")')">
+                <option value="4" selected="@(optionSelected == "4")">4</option>
+                <option value="8" selected="@(optionSelected == "8")">8</option>
+                <option value="10" selected="@(optionSelected == "10")">10</option>
+            </select>
         </p>
     </div>
 </form>
@@ -39,18 +40,24 @@
         <tr>
             <th>
                 @Html.DisplayName("Name")
-                @*@Html.DisplayNameFor(model => model.Name)*@
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]"><i class="fas fa-sort fa-lg"></i></a>
+                <a asp-action="Index" 
+                   asp-route-sortOrder="@Model.Item2.NameSortParm" 
+                   asp-route-pageNumber="@Model.Item1.PageNumber"
+                   >
+                <i class="fas fa-sort fa-lg"></i></a>
             </th>
             <th>
                 @Html.DisplayName("Abbreviation")
-                @*@Html.DisplayNameFor(model => model.Abbreviation)*@
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["AbrvSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]"><i class="fas fa-sort fa-lg"></i></a>
+                <a asp-action="Index" 
+                   asp-route-sortOrder="@Model.Item2.AbrvSortParm" 
+                   asp-route-pageNumber="@Model.Item1.PageNumber"
+                   >
+                <i class="fas fa-sort fa-lg"></i></a>
             </th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Item1.Data)
         {
             <tr>
                 <td>
@@ -61,9 +68,7 @@
                 </td>
 
                 <td>
-                    @*<button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("Edit", "Car")/'+@item.CarId" >Edit</button>*@
                     <a asp-action="Edit" asp-route-id="@item.Id"><i class="far fa-edit fa-lg"></i></a> |
-                    @*<a asp-action="Details" asp-route-id="@item.Id"><i class="fas fa-clipboard fa-lg"></i></a> |*@
                     <a asp-action="Delete" asp-route-id="@item.Id"><i class="fas fa-eraser fa-lg"></i></a>
                 </td>
             </tr>
@@ -71,30 +76,12 @@
     </tbody>
 </table>
 
-@{
-    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
-    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
-}
-
-<a asp-action="Index"
-   asp-route-sortOrder="@ViewData["CurrentSort"]"
-   asp-route-pageNumber="@(Model.PageIndex - 1)"
-   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-   class="btn btn-default @prevDisabled">
-    Previous
-</a>
-<a asp-action="Index"
-   asp-route-sortOrder="@ViewData["CurrentSort"]"
-   asp-route-pageNumber="@(Model.PageIndex + 1)"
-   asp-route-currentFilter="@ViewData["CurrentFilter"]"
-   class="btn btn-default @nextDisabled">
-    Next
-</a>
+<partial name="_Pagination" view-data="ViewData" model="Model" />
 
 <script>
     function PageSizeValue(pageSize, baseUrl) {
         window.location.href = baseUrl + '?pageSize=' + pageSize.value;
-}
+    }
 </script>
 
 

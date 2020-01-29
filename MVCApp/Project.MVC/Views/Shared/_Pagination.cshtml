@@ -1,0 +1,20 @@
+﻿@* Here is passed Tuple model from Index view and values are used
+    from objects Item1 - PagedResult<VehicleMakeViewModel>
+             and Item2 - SearchSortExClass                       *@
+
+<cs-pager cs-paging-pagenumber=(int)Model.Item1.PageNumber
+          cs-paging-totalitems=(int)Model.Item1.TotalItems
+          cs-paging-pagesize=(int)Model.Item1.PageSize
+          cs-pagenumber-param="pageNumber"
+          asp-route-serachString="@Model.Item2.SearchFilter"
+          asp-route-sortOrder="@Model.Item2.CurrentSortOrder"
+          asp-controller=@ViewData["Controller"]
+          asp-action=@ViewData["Action"]
+          cs-pager-li-current-class="page-item active"
+          cs-pager-li-other-class="page-item"
+          cs-pager-li-non-active-class="page-item disabled"
+          cs-pager-link-current-class="page-link"
+          cs-pager-link-other-class="page-link"
+          cs-paging-maxpageritems="5">
+</cs-pager>
+

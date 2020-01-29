@@ -11,7 +11,8 @@ namespace Project.MVC.Interfaces
         int Id { get; set; }
         string Name { get; set; }
         string Abbreviation { get; set; }
+        string ErrorMessage { get; set; }
 
-        ICollection<VehicleModelViewModel> VehicleModels { get; set; }
+        // ICollection<VehicleModelViewModel> VehicleModels { get; set; }
     }
 }
