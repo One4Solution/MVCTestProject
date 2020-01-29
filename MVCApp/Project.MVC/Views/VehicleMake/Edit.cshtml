@@ -1,0 +1,39 @@
+﻿@model Project.MVC.Models.VehicleMakeViewModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h4>Edit current vehicle make</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" method="post" >
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+                <span class="text-danger">@ViewBag.ErrorMessage</span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Abbreviation" class="control-label"></label>
+                <input asp-for="Abbreviation" class="form-control" />
+                <span asp-validation-for="Abbreviation" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <a asp-action="Index" class="btn btn-info">Back to List</a> |
+                <input type="submit" value="Save" class="btn btn-primary" /> 
+            </div>
+        </form>
+    </div>
+</div>
+
+@*<div>
+    <a asp-action="Index" class="btn btn-info">Back to List</a>
+</div>*@
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
