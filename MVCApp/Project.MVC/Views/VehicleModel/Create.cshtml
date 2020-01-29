@@ -11,7 +11,8 @@
         <form asp-action="Create" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-                <select id="selector"
+                <select id="selector" 
+                        onfocus="this.size=9" onblur="this.size=1" onchange="this.size = 1; this.blur()"
                         asp-for="VehicleMakeId"
                         asp-items="@(new SelectList(Model.vehicleMakeModels, "Id", "Name"))">
                     <option value="" selected disabled>-- Select vehicle make --</option>

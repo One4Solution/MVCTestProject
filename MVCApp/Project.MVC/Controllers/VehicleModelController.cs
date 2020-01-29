@@ -104,7 +104,7 @@ namespace Project.MVC.Controllers
         {
             var vehicleMake = await _service.GetVehicleMakeAsync();
             var vehicleModelViewModel = new VehicleModelViewModel();
-            vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake);
+            vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake.OrderBy(x => x.Name));
 
             return View(vehicleModelViewModel);
         }
