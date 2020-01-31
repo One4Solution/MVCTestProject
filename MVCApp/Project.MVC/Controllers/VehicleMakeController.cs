@@ -235,7 +235,7 @@ namespace Project.MVC.Controllers
             await _service.DeleteVehicleMakeAsync(id);
 
             var vehicle = new VehicleMakeViewModel { Name = ""};
-            SweetAlert("Vehicle was successfully deleted!", NotificationType.success);
+            SweetAlert("Vehicle brand was successfully deleted!", NotificationType.success);
             return View(vehicle);
         }
 

@@ -18,7 +18,7 @@ namespace Project.MVC.Models
         public string Name { get; set; }
 
         [Required(ErrorMessage = "This field cannot be empty")]
-        [StringLength(10, ErrorMessage = "Abbreviation length must be between 2 and 10 characters", MinimumLength = 2)]
+        [StringLength(30, ErrorMessage = "Abbreviation length must be between 2 and 30 characters", MinimumLength = 2)]
         public string Abbreviation { get; set; }
 
         public string ErrorMessage { get; set; }
