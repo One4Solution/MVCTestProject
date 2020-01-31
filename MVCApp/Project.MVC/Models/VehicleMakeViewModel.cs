@@ -21,8 +21,6 @@ namespace Project.MVC.Models
         [StringLength(10, ErrorMessage = "Abbreviation length must be between 2 and 10 characters", MinimumLength = 2)]
         public string Abbreviation { get; set; }
 
-        // public ICollection<VehicleModelViewModel> VehicleModels { get; set; }
-
         public string ErrorMessage { get; set; }
 
     }

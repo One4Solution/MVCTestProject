@@ -1,39 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using cloudscribe.Pagination.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project.MVC.HelpClasses;
+using Project.MVC.Interfaces;
 using Project.MVC.Models;
 using Project.Service.DataContext;
 using Project.Service.Interfaces;
 using Project.Service.Models;
+using static Project.MVC.HelpClasses.NotificationEnum;
 
 namespace Project.MVC.Controllers
 {
-    public class VehicleModelController : Controller
+    public class VehicleModelController : VehicleBaseController
     {
-        private readonly IVehicleService _service;
-        private readonly IMapper _mapper;
         private static string _currentVehicleModelName;
         private static int _currentPageSize = 0;
-        SearchSortExClass searchSortParams = new SearchSortExClass();
-        // public VehicleMakeViewModel VehicleMakeSelected { get; set; }
 
-        public VehicleModelController(IVehicleService service, IMapper mapper)
-        {
-            _service = service;
-            _mapper = mapper;
-        }
+        public VehicleModelController(IVehicleService service, IMapper mapper, SearchSortExClass searchSortParams) : base(service, mapper, searchSortParams) { }
 
         public IActionResult SetPageSize(int pageSize = 4)
         {
             _currentPageSize = pageSize;
-            searchSortParams.SlectionPageSize = _currentPageSize;
-            // ViewData["SlectionPageSize"] = _currentPageSize;
+            _searchSortParams.SlectionPageSize = _currentPageSize;
             return RedirectToAction("Index");
         }
 
@@ -41,13 +35,10 @@ namespace Project.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string sortOrder, string searchString, string clearSearch, int pageNumber = 1, int pageSize = 4)
         {
-            //pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
-            //ViewData["SlectionPageSize"] = _currentPageSize > 0 ? _currentPageSize : pageSize;
-
             var result = await _service.GetVehicleModelAsync();
             var vehicles = _mapper.Map<List<VehicleModelViewModel>>(result);
-
-            //var finalView = PaginationAndSorting(sortOrder, currentFilter, searchString, clearSearch, vehicles, pageNumber, pageSize);
+            if (vehicles == null)
+                vehicles = new List<VehicleModelViewModel>();
             var paggedVehicles = VehiclePaginationAndSorting(sortOrder, searchString, clearSearch, pageNumber, pageSize, vehicles);
 
             return View(paggedVehicles);
@@ -56,30 +47,24 @@ namespace Project.MVC.Controllers
         // method to return pagged vehicle models
         public (PagedResult<VehicleModelViewModel> vehicleMake, SearchSortExClass param) VehiclePaginationAndSorting(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize, List<VehicleModelViewModel> vehicleModels)
         {
-            //ViewData["CurrentSort"] = sortOrder;
-            //ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-            //ViewData["AbrvSortParm"] = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
-
             // define pageSize based on dropdown
             pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
             // save parameters
-            searchSortParams.CurrentSortOrder = sortOrder;
-            searchSortParams.SearchFilter = searchString;
-            searchSortParams.BrandSortParm = String.IsNullOrEmpty(sortOrder) ? "brand_desc" : "";
-            searchSortParams.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-            searchSortParams.AbrvSortParm = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
-            searchSortParams.SlectionPageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
+            _searchSortParams.CurrentSortOrder = sortOrder;
+            _searchSortParams.SearchFilter = searchString;
+            _searchSortParams.BrandSortParm = String.IsNullOrEmpty(sortOrder) ? "brand_desc" : "";
+            _searchSortParams.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            _searchSortParams.AbrvSortParm = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
+            _searchSortParams.SlectionPageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
-            var excludeRecords = (pageSize * pageNumber) - pageSize; // which data will not be included
+            var excludeVehicles = (pageSize * pageNumber) - pageSize; // which data will not be included
             var totalVehicles = vehicleModels.Count();
-
-            //ViewData["SearchFilter"] = searchString;
 
             if (!String.IsNullOrEmpty(clearSearch))
             {
                 searchString = null;
-                searchSortParams.SearchFilter = null;
+                _searchSortParams.SearchFilter = null;
                 // ViewData["SearchFilter"] = null;
             }
 
@@ -111,7 +96,7 @@ namespace Project.MVC.Controllers
             }
 
 
-            var pagedVehicles = vehicleModels.Skip(excludeRecords).Take(pageSize).ToList();
+            var pagedVehicles = vehicleModels.Skip(excludeVehicles).Take(pageSize).ToList();
 
             var vehicleResult = new PagedResult<VehicleModelViewModel>
             {
@@ -121,7 +106,7 @@ namespace Project.MVC.Controllers
                 PageSize = pageSize
             };
 
-            return (vehicleResult, searchSortParams);
+            return (vehicleResult, _searchSortParams);
         }
 
 
@@ -139,7 +124,7 @@ namespace Project.MVC.Controllers
 
         // method to create new vehicle
         [HttpPost]
-        public async Task<IActionResult> Create([Bind("Id, Name, Abbreviation, VehicleMakeId")] VehicleModelViewModel vehicleModelViewModel)
+        public async Task<IActionResult> Create([Bind("Name, Abbreviation, VehicleMakeId")] VehicleModelViewModel vehicleModelViewModel)
         {
             if (ModelState.IsValid)
             {
@@ -155,10 +140,25 @@ namespace Project.MVC.Controllers
                 }
 
                 var vehicle = _mapper.Map<VehicleModel>(vehicleModelViewModel);
-                await _service.CreateVehicleModelAsync(vehicle);
+                await _service.CreateVehicleModelAsync(vehicle);  
 
-                return RedirectToAction("Index");
+                ModelState.Clear(); // clear form inputs after successfully creating
+
+                // get vehicle makes to return in view (dropdown selection)
+                var vehicleMakes = await _service.GetVehicleMakeAsync();
+                var makeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMakes.OrderBy(x => x.Name));
+
+                var vehicleModel = new VehicleModelViewModel
+                {
+                    ErrorMessage = "",
+                    vehicleMakeModels = makeModels
+                };
+
+                SweetAlert("Vehicle make was created!", NotificationType.success);
+                Response.StatusCode = (int)HttpStatusCode.Created;
+                return View(vehicleModel);
             }
+
             return View(vehicleModelViewModel);
         }
 
@@ -170,10 +170,13 @@ namespace Project.MVC.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
-                return NotFound();
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             var result = await _service.GetVehicleModelByIdAsync(id);
             var vehicle = _mapper.Map<VehicleModelViewModel>(result);
+
+            if (vehicle == null)
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             _currentVehicleModelName = vehicle.Name;
 
@@ -183,10 +186,10 @@ namespace Project.MVC.Controllers
 
         // method to edit selected vehicle
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, [Bind("Id, Name, Abbreviation, VehicleMakeId")] VehicleModelViewModel vehicleModelViewModel)
+        public async Task<IActionResult> Edit(int? id, [Bind("Id, Name, Abbreviation, VehicleMakeId")] VehicleModelViewModel vehicleModelViewModel)
         {
-            if (id != vehicleModelViewModel.Id)
-                return NotFound();
+            if (id != vehicleModelViewModel.Id || id == null)
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             if (ModelState.IsValid)
             {
@@ -207,11 +210,13 @@ namespace Project.MVC.Controllers
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!await _service.CheckVehicleModelAsync(vehicleModelViewModel.Id))
-                        return NotFound();
+                        return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
                     else
-                        throw;
+                        return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
                 }
-                return RedirectToAction("Index");
+
+                SweetAlert("Vehicle was successfully modified!", NotificationType.success);
+                return View(vehicleModelViewModel);
             }
 
             return View(vehicleModelViewModel);
@@ -225,12 +230,12 @@ namespace Project.MVC.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
-                return NotFound();
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             var result = await _service.GetVehicleModelByIdAsync(id);
 
             if (result == null)
-                return NotFound();
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             var vehicle = _mapper.Map<VehicleModelViewModel>(result);
 
@@ -243,7 +248,10 @@ namespace Project.MVC.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _service.DeleteVehicleModelAsync(id);
-            return RedirectToAction("Index");
+
+            var vehicle = new VehicleModelViewModel { Name = ""};
+            SweetAlert("Vehicle was successfully deleted!", NotificationType.success);
+            return View(vehicle);
         }
 
 

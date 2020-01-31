@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using cloudscribe.Pagination.Models;
@@ -8,33 +9,28 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Project.MVC.HelpClasses;
+using Project.MVC.Interfaces;
 using Project.MVC.Models;
 using Project.Service.DataContext;
 using Project.Service.Interfaces;
 using Project.Service.Models;
 using Project.Service.Services;
+using static Project.MVC.HelpClasses.NotificationEnum;
 
 namespace Project.MVC.Controllers
 {
-    public class VehicleMakeController : Controller
+    public class VehicleMakeController : VehicleBaseController
     {
-        private readonly IVehicleService _service;
-        private readonly IMapper _mapper;
         private static string _currentVehicleMakeName;
         private static int _currentPageSize = 0;
-        SearchSortExClass searchSortParams = new SearchSortExClass();
 
-        public VehicleMakeController(IVehicleService service, IMapper mapper, CarContext carContext)
-        {
-            _service = service;
-            _mapper = mapper;
-        }
+        public VehicleMakeController(IVehicleService service, IMapper mapper, SearchSortExClass searchSortParams) : base(service, mapper, searchSortParams) { }
 
         // method to set page size based on dropdown selection in the view
         public IActionResult SetPageSize(int pageSize = 4)
         {
             _currentPageSize = pageSize;
-            searchSortParams.SlectionPageSize = _currentPageSize;
+            _searchSortParams.SlectionPageSize = _currentPageSize;
             return RedirectToAction("Index");
         }
 
@@ -45,6 +41,9 @@ namespace Project.MVC.Controllers
         {
             var result = await _service.GetVehicleMakeAsync();
             var vehicles = _mapper.Map<List<VehicleMakeViewModel>>(result);
+
+            if (vehicles == null)
+                vehicles = new List<VehicleMakeViewModel>();
             var paggedVehicles = VehiclePaginationAndSorting(sortOrder, searchString, clearSearch, pageNumber, pageSize, vehicles);
 
             return View(paggedVehicles);
@@ -57,13 +56,13 @@ namespace Project.MVC.Controllers
             pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
             // save parameters
-            searchSortParams.CurrentSortOrder = sortOrder;
-            searchSortParams.SearchFilter = searchString;
-            searchSortParams.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-            searchSortParams.AbrvSortParm = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
-            searchSortParams.SlectionPageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
+            _searchSortParams.CurrentSortOrder = sortOrder;
+            _searchSortParams.SearchFilter = searchString;
+            _searchSortParams.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            _searchSortParams.AbrvSortParm = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
+            _searchSortParams.SlectionPageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
-            var excludeRecords = (pageSize * pageNumber) - pageSize; // which data will not be included
+            var excludeVehicles = (pageSize * pageNumber) - pageSize; // which data will not be included
             var totalVehicles = vehicleMakes.Count();
 
 
@@ -71,7 +70,7 @@ namespace Project.MVC.Controllers
             if (!String.IsNullOrEmpty(clearSearch))
             {
                 searchString = null;
-                searchSortParams.SearchFilter = null;
+                _searchSortParams.SearchFilter = null;
             }
 
             // check if search field is not empty
@@ -98,8 +97,8 @@ namespace Project.MVC.Controllers
                     break;
             }
 
-            var pagedVehicles = vehicleMakes.Skip(excludeRecords).Take(pageSize).ToList();
-            
+            var pagedVehicles = vehicleMakes.Skip(excludeVehicles).Take(pageSize).ToList();
+
             var vehicleResult = new PagedResult<VehicleMakeViewModel>
             {
                 Data = pagedVehicles,
@@ -107,8 +106,8 @@ namespace Project.MVC.Controllers
                 PageNumber = pageNumber,
                 PageSize = pageSize
             };
-            
-            return (vehicleResult, searchSortParams);
+
+            return (vehicleResult, _searchSortParams);
         }
 
 
@@ -120,9 +119,10 @@ namespace Project.MVC.Controllers
             return View(vehicleMakeModel);
         }
 
+
         // method to create new vehicle
         [HttpPost]
-        public async Task<IActionResult> Create([Bind("Id, Name, Abbreviation")] VehicleMakeViewModel vehicleMakeViewModel)
+        public async Task<IActionResult> Create([Bind("Name, Abbreviation")] VehicleMakeViewModel vehicleMakeViewModel)
         {
             if (ModelState.IsValid)
             {
@@ -137,8 +137,15 @@ namespace Project.MVC.Controllers
 
                 var vehicle = _mapper.Map<VehicleMake>(vehicleMakeViewModel);
                 await _service.CreateVehicleMakeAsync(vehicle);
-                return RedirectToAction("Index");
+
+                ModelState.Clear(); // clear form inputs after successfully creating
+
+                var vehicleMakeModel = new VehicleMakeViewModel { ErrorMessage = "" };
+                SweetAlert("Vehicle make was created!", NotificationType.success);
+                Response.StatusCode = (int)HttpStatusCode.Created;
+                return View(vehicleMakeModel);
             }
+
             return View(vehicleMakeViewModel);
 
         }
@@ -149,10 +156,13 @@ namespace Project.MVC.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
-                return NotFound();
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             var result = await _service.GetVehicleMakeByIdAsync(id);
             var vehicle = _mapper.Map<VehicleMakeViewModel>(result);
+
+            if (vehicle == null)
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             _currentVehicleMakeName = vehicle.Name; // save current vehicle name on edit 
 
@@ -162,10 +172,10 @@ namespace Project.MVC.Controllers
 
         // method to edit selected vehicle
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, [Bind("Id, Name, Abbreviation")] VehicleMakeViewModel vehicleMakeViewModel)
+        public async Task<IActionResult> Edit(int? id, [Bind("Id, Name, Abbreviation")] VehicleMakeViewModel vehicleMakeViewModel)
         {
-            if (id != vehicleMakeViewModel.Id)
-                return NotFound();
+            if (id != vehicleMakeViewModel.Id || id == null)
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             if (ModelState.IsValid)
             {
@@ -186,12 +196,14 @@ namespace Project.MVC.Controllers
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!await _service.CheckVehicleMakeAsync(vehicleMakeViewModel.Id))
-                        return NotFound();
+                        return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
                     else
-                        throw;
+                        return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
                 }
 
-                return RedirectToAction("Index");
+                SweetAlert("Vehicle was successfully modified!", NotificationType.success);
+                return View(vehicleMakeViewModel);
+                // return RedirectToAction("Index");
             }
 
             return View(vehicleMakeViewModel);
@@ -203,12 +215,12 @@ namespace Project.MVC.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
-                return NotFound();
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             var result = await _service.GetVehicleMakeByIdAsync(id);
 
             if (result == null)
-                return NotFound();
+                return RedirectToAction("ErrorResponse", "Error", new { statusCode = 404 });
 
             var vehicle = _mapper.Map<VehicleMakeViewModel>(result);
 
@@ -221,8 +233,10 @@ namespace Project.MVC.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _service.DeleteVehicleMakeAsync(id);
-            return RedirectToAction("Index");
 
+            var vehicle = new VehicleMakeViewModel { Name = ""};
+            SweetAlert("Vehicle was successfully deleted!", NotificationType.success);
+            return View(vehicle);
         }
 
 

@@ -1,5 +1,4 @@
-﻿@*@model IEnumerable<Project.MVC.Models.VehicleMakeViewModel>*@
-@*@model Project.MVC.HelpClasses.Pagination<VehicleModelViewModel>*@
+﻿
 @model ValueTuple<cloudscribe.Pagination.Models.PagedResult<VehicleModelViewModel>, SearchSortExClass>
 @{
     ViewData["Title"] = "Index";
@@ -9,63 +8,72 @@
 
 <h3>List of Vehicle Models</h3>
 
-<div>
-    <p>
-        <a asp-action="Create" asp-controller="VehicleModel" class="btn btn-primary">Create</a>
-    </p>
-</div>
-
 @{
-    //var clearDisabled = ViewData["SearchFilter"] != null ? "" : "disabled";
-    //var optionSelected = ViewData["SlectionPageSize"].ToString();
-
     var clearDisabled = @Model.Item2.SearchFilter != null ? "" : "disabled";
+    var searchType = clearDisabled == "disabled" ? "button" : "submit";
     var optionSelected = @Model.Item2.SlectionPageSize.ToString();
 }
 
-<form asp-action="Index" method="get">
-    <div class="form-actions no-color">
-        <p>
-            <input type="text" name="SearchString" value="@Model.Item2.SearchFilter" />
-            <input type="submit" value="Search" class="btn btn-secondary" /> |
-            <input type="submit" value="Clear" class="btn btn-secondary @clearDisabled" name="clearSearch" />
-            <select asp-for="@Model.Item1.PageSize" asp-action="Index" onchange="PageSizeValue(this,'@Url.Action("SetPageSize", "VehicleModel")')">
-                <option value="4" selected="@(optionSelected == "4")">4</option>
-                <option value="8" selected="@(optionSelected == "8")">8</option>
-                <option value="10" selected="@(optionSelected == "10")">10</option>
-            </select>
-        </p>
+
+<div class="container">
+    <div class="row">
+        <div class="col-7">
+            <form asp-action="Index" method="get">
+                <div class="form-actions no-color">
+                    <p>
+                        <input type="text" name="SearchString" value="@Model.Item2.SearchFilter" />
+                        <input type="submit" value="Search" class="btn btn-secondary" /> |
+                        <input type=@searchType value="Clear" class="btn btn-secondary @clearDisabled" name="clearSearch" />
+                        Items per page:
+                        <select asp-for="@Model.Item1.PageSize" asp-action="Index" onchange="PageSizeValue(this,'@Url.Action("SetPageSize", "VehicleModel")')">
+                            <option value="4" selected="@(optionSelected == "4")">4</option>
+                            <option value="8" selected="@(optionSelected == "8")">8</option>
+                            <option value="10" selected="@(optionSelected == "10")">10</option>
+                        </select>
+                    </p>
+                </div>
+            </form>
+        </div>
+        <div class="col-5">
+            <p>
+                <a asp-action="Create" asp-controller="VehicleModel" class="btn btn-primary float-right">Create <i class="fas fa-car fa-lg"></i></a>
+            </p>
+        </div>
     </div>
-</form>
+</div>
 
 
-<table class="table">
-    <thead>
+<table class="table table-striped">
+    <thead class="tableHeader">
         <tr>
-            <th>
+            <th class="tableBrandName">
                 @Html.DisplayName("Brand Name")
-                <a asp-action="Index" 
-                   asp-route-sortOrder="@Model.Item2.BrandSortParm" 
-                   asp-route-pageNumber="@Model.Item1.PageNumber"
-                   >
-                <i class="fas fa-sort fa-lg"></i></a>
+                <a class="sortLink"
+                   asp-action="Index"
+                   asp-route-sortOrder="@Model.Item2.BrandSortParm"
+                   asp-route-pageNumber="@Model.Item1.PageNumber">
+                    <i class="fas fa-sort fa-lg"></i>
+                </a>
             </th>
-            <th>
+            <th class="tableModelName">
                 @Html.DisplayName("Name")
-                <a asp-action="Index" 
-                   asp-route-sortOrder="@Model.Item2.NameSortParm" 
-                   asp-route-pageNumber="@Model.Item1.PageNumber"
-                   >
-                <i class="fas fa-sort fa-lg"></i></a>
+                <a class="sortLink"
+                   asp-action="Index"
+                   asp-route-sortOrder="@Model.Item2.NameSortParm"
+                   asp-route-pageNumber="@Model.Item1.PageNumber">
+                    <i class="fas fa-sort fa-lg"></i>
+                </a>
             </th>
-            <th>
+            <th class="tableModelAbrv">
                 @Html.DisplayName("Abbreviation")
-                <a asp-action="Index" 
-                   asp-route-sortOrder="@Model.Item2.AbrvSortParm" 
-                   asp-route-pageNumber="@Model.Item1.PageNumber"
-                   >
-                <i class="fas fa-sort fa-lg"></i></a>
+                <a class="sortLink"
+                   asp-action="Index"
+                   asp-route-sortOrder="@Model.Item2.AbrvSortParm"
+                   asp-route-pageNumber="@Model.Item1.PageNumber">
+                    <i class="fas fa-sort fa-lg"></i>
+                </a>
             </th>
+            <th class="tableHeaderOptions">Options</th>
         </tr>
     </thead>
     <tbody>
@@ -83,8 +91,8 @@
                 </td>
 
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id"><i class="far fa-edit fa-lg"></i></a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id"><i class="fas fa-eraser fa-lg"></i></a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" data-toggle="tooltip" data-placement="top" title="Edit"><i class="far fa-edit fa-lg"></i></a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id" data-toggle="tooltip" data-placement="top" title="Delete"><i class="fas fa-eraser fa-lg"></i></a>
                 </td>
             </tr>
         }

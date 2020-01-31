@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Project.MVC.Interfaces;
+using Project.MVC.Models;
 using Project.Service.DataContext;
 using Project.Service.Interfaces;
 using Project.Service.Services;
@@ -31,9 +33,12 @@ namespace Project.MVC
             services.AddControllersWithViews();
             services.AddDbContext<CarContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("CarDB")));
+
             services.AddTransient<IVehicleService, VehicleService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddCloudscribePagination();
+            services.AddTransient<SearchSortExClass>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -45,10 +50,11 @@ namespace Project.MVC
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseStatusCodePagesWithReExecute("/Error/{0}");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 

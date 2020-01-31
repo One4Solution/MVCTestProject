@@ -6,14 +6,19 @@
     <title>@ViewData["Title"] - Project.MVC</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
-    @*dodvanje fontawesomea*@
+    <!--fontawesome -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+    <link rel="stylesheet" href="~/css//table.css" />
+    <!--sweet alert -->
+    <link href="~/sweetAlert/sweetalert.css" rel="stylesheet" />
+    <script src="~/sweetAlert/sweetalert.min.js"></script>
+
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3 navBarColor">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Project.MVC</a>
+                <a class="navbar-brand text-white" asp-area="" asp-controller="Home" asp-action="Index">Project.MVC</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -21,13 +26,13 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="VehicleMake" asp-action="Index">Vehicle</a>
+                            <a class="nav-link text-white" asp-area="" asp-controller="VehicleMake" asp-action="Index">Vehicle Makes</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="VehicleModel" asp-action="Index">Vehicle Models</a>
+                            <a class="nav-link text-white" asp-area="" asp-controller="VehicleModel" asp-action="Index">Vehicle Models</a>
                         </li>
                     </ul>
                 </div>
@@ -36,6 +41,7 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
+            @Html.Partial("_NotificationAlert")
             @RenderBody()
         </main>
     </div>

@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Project.Service.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Project.Service.Models
 {
-    public class VehicleMake
+    public class VehicleMake : IVehicleMake
     {
         public VehicleMake()
         {

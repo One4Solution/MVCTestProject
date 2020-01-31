@@ -1,0 +1,77 @@
+﻿.tableHeaderName {
+    width: 40%;
+    color: white;
+}
+
+.tableHeaderAbrv {
+    width: 30%;
+    color: white;
+}
+
+.tableHeaderOptions {
+    width: 10%;
+    color: white;
+}
+
+.tableHeader {
+    /*background-color: #4e4f50;*/
+    background-color: #276ec2;
+}
+
+a.sortLink:link {
+    color: white !important;
+}
+
+a.sortLink {
+    color: white !important;
+}
+
+    a.sortLink:hover {
+        color: #cccccc !important;
+    }
+
+
+.table-striped > tbody > tr:nth-child(even) > td, .table-striped > tbody > tr:nth-child(even) > th {
+    background-color: #d0e3f9;
+}
+
+
+.table-striped > tbody > tr:nth-child(odd) > td, .table-striped > tbody > tr:nth-child(odd) > th {
+    background-color: white;
+}
+
+
+
+
+.tableBrandName {
+    width: 40%;
+    color: white;
+}
+
+
+.tableModelName {
+    width: 30%;
+    color: white;
+}
+
+.tableModelAbrv {
+    width: 20%;
+    color: white;
+}
+
+.tableHeaderOptions {
+    width: 10%;
+    color: white;
+}
+
+
+.navBarColor {
+    background-color: #276ec2 !important;
+}
+
+
+.errorDiv {
+    margin: 5%;
+    padding: 5%;
+}
+
