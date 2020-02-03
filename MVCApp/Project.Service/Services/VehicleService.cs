@@ -71,11 +71,6 @@ namespace Project.Service.Services
             var vehicle = await GetVehicleMakeByIdAsync(id);
             _dbCarContext.VehicleMake.Remove(vehicle);
 
-            // check if some model exists of that brand and also remove all models with brand
-            var modelVehiclesExist = await CheckIfExistsVehicleModelByMakeIdAsync(id);
-            if (modelVehiclesExist)
-                _dbCarContext.VehicleModel.RemoveRange(_dbCarContext.VehicleModel.Where(x => x.VehicleMakeId == id));
-
             await _dbCarContext.SaveChangesAsync();
         }
 
@@ -89,12 +84,7 @@ namespace Project.Service.Services
         // method to return list of vehicle models
         public async Task<List<VehicleModel>> GetVehicleModelAsync()
         {
-            var vehicleModels = await _dbCarContext.VehicleModel.AsNoTracking().ToListAsync();
-
-            foreach (var vehicleModel in vehicleModels)
-            {
-                vehicleModel.VehicleMake = await GetVehicleMakeByIdAsync(vehicleModel.VehicleMakeId);
-            }
+            var vehicleModels = await _dbCarContext.VehicleModel.Include(x => x.VehicleMake).AsNoTracking().ToListAsync();
 
             return vehicleModels;
         }

@@ -117,7 +117,6 @@ namespace Project.MVC.Controllers
             var vehicleMake = await _service.GetVehicleMakeAsync();
             var vehicleModelViewModel = new VehicleModelViewModel();
             vehicleModelViewModel.vehicleMakeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMake.OrderBy(x => x.Name));
-            vehicleModelViewModel.ErrorMessage = "";
 
             return View(vehicleModelViewModel);
         }
@@ -128,7 +127,6 @@ namespace Project.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                vehicleModelViewModel.ErrorMessage = ""; // display message depends on name existing
                 // check if model name already exists in db for vehicle brand (make)
                 var alreadyExists = await _service.GetVehicleModelByNameAsync(vehicleModelViewModel.Name);
                 if (alreadyExists != null)
@@ -148,12 +146,8 @@ namespace Project.MVC.Controllers
                 var vehicleMakes = await _service.GetVehicleMakeAsync();
                 var makeModels = _mapper.Map<List<VehicleMakeViewModel>>(vehicleMakes.OrderBy(x => x.Name));
 
-                var vehicleModel = new VehicleModelViewModel
-                {
-                    ErrorMessage = "",
-                    vehicleMakeModels = makeModels
-                };
-
+                var vehicleModel = new VehicleModelViewModel { vehicleMakeModels = makeModels };
+     
                 SweetAlert("Vehicle make was created!", NotificationType.success);
                 Response.StatusCode = (int)HttpStatusCode.Created;
                 return View(vehicleModel);
@@ -193,7 +187,6 @@ namespace Project.MVC.Controllers
 
             if (ModelState.IsValid)
             {
-                vehicleModelViewModel.ErrorMessage = "";
                 // check if model name already exists in db for vehicle brand (make)
                 var alreadyExists = await _service.GetVehicleModelByNameAsync(vehicleModelViewModel.Name);
                 if (alreadyExists != null && _currentVehicleModelName != alreadyExists.Name)

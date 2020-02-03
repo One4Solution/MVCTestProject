@@ -115,8 +115,7 @@ namespace Project.MVC.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var vehicleMakeModel = new VehicleMakeViewModel { ErrorMessage = "" };
-            return View(vehicleMakeModel);
+            return View();
         }
 
 
@@ -126,7 +125,6 @@ namespace Project.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                vehicleMakeViewModel.ErrorMessage = ""; // display message depends on name existing
                 // check if model name already exists in db for vehicle brand (make)
                 var alreadyExists = await _service.GetVehicleMakeByNameAsync(vehicleMakeViewModel.Name);
                 if (alreadyExists != null)
@@ -140,10 +138,9 @@ namespace Project.MVC.Controllers
 
                 ModelState.Clear(); // clear form inputs after successfully creating
 
-                var vehicleMakeModel = new VehicleMakeViewModel { ErrorMessage = "" };
                 SweetAlert("Vehicle make was created!", NotificationType.success);
                 Response.StatusCode = (int)HttpStatusCode.Created;
-                return View(vehicleMakeModel);
+                return View();
             }
 
             return View(vehicleMakeViewModel);
@@ -179,7 +176,6 @@ namespace Project.MVC.Controllers
 
             if (ModelState.IsValid)
             {
-                vehicleMakeViewModel.ErrorMessage = "";
                 // check if model name already exists in db for vehicle brand (make)
                 var alreadyExists = await _service.GetVehicleMakeByNameAsync(vehicleMakeViewModel.Name);
                 if (alreadyExists != null && _currentVehicleMakeName != alreadyExists.Name)
@@ -203,7 +199,6 @@ namespace Project.MVC.Controllers
 
                 SweetAlert("Vehicle was successfully modified!", NotificationType.success);
                 return View(vehicleMakeViewModel);
-                // return RedirectToAction("Index");
             }
 
             return View(vehicleMakeViewModel);
