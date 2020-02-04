@@ -11,6 +11,10 @@ namespace Project.Service.Interfaces
         // Make
         Task<List<VehicleMake>> GetVehicleMakeAsync();
 
+        Task<int> GetVehicleMakeTotalAsync(string searchString);
+
+        Task<List<VehicleMake>> GetSortedPaggedVehicleMake(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize);
+
         Task CreateVehicleMakeAsync(VehicleMake vehicleMake);
 
         Task<VehicleMake> GetVehicleMakeByIdAsync(int? id);
@@ -28,6 +32,10 @@ namespace Project.Service.Interfaces
 
         //Model
         Task<List<VehicleModel>> GetVehicleModelAsync();
+
+        Task<int> GetVehicleModelTotalAsync(string searchString);
+
+        Task<List<VehicleModel>> GetSortedPaggedVehicleModel(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize);
 
         Task CreateVehicleModelAsync(VehicleModel vehicleModel);
 

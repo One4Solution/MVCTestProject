@@ -39,32 +39,30 @@ namespace Project.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string sortOrder, string searchString, string clearSearch, int pageNumber = 1, int pageSize = 4)
         {
-            var result = await _service.GetVehicleMakeAsync();
-            var vehicles = _mapper.Map<List<VehicleMakeViewModel>>(result);
+            // define pageSize based on dropdown
+            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
-            if (vehicles == null)
-                vehicles = new List<VehicleMakeViewModel>();
-            var paggedVehicles = VehiclePaginationAndSorting(sortOrder, searchString, clearSearch, pageNumber, pageSize, vehicles);
+            var totalVehicles = await _service.GetVehicleMakeTotalAsync(searchString); // get total number of vehicles based on search
+            var result = await _service.GetSortedPaggedVehicleMake(sortOrder, searchString, clearSearch, pageNumber, pageSize);
+
+            var vehicleMakes = _mapper.Map<List<VehicleMakeViewModel>>(result);
+
+            var paggedVehicles = VehiclePaginationAndSorting(sortOrder, searchString, clearSearch, pageNumber, pageSize, vehicleMakes, totalVehicles);
 
             return View(paggedVehicles);
         }
 
-        // method to return pagged vehicle makes
-        public (PagedResult<VehicleMakeViewModel> vehicleMake, SearchSortExClass param) VehiclePaginationAndSorting(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize, List<VehicleMakeViewModel> vehicleMakes)
-        {
-            // define pageSize based on dropdown
-            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
+
+        // method to return pagged vehicle makes
+        public (PagedResult<VehicleMakeViewModel> vehicleMake, SearchSortExClass param) VehiclePaginationAndSorting(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize, List<VehicleMakeViewModel> vehicleMakes, int totalVehicles)
+        {
             // save parameters
             _searchSortParams.CurrentSortOrder = sortOrder;
             _searchSortParams.SearchFilter = searchString;
             _searchSortParams.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
             _searchSortParams.AbrvSortParm = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
             _searchSortParams.SlectionPageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
-
-            var excludeVehicles = (pageSize * pageNumber) - pageSize; // which data will not be included
-            var totalVehicles = vehicleMakes.Count();
-
 
             // clear serach input
             if (!String.IsNullOrEmpty(clearSearch))
@@ -73,35 +71,9 @@ namespace Project.MVC.Controllers
                 _searchSortParams.SearchFilter = null;
             }
 
-            // check if search field is not empty
-            if (!String.IsNullOrEmpty(searchString))
-            {
-                vehicleMakes = vehicleMakes.Where(x => x.Name.ToLower().Contains(searchString.ToLower())
-               || x.Abbreviation.ToLower().Contains(searchString.ToLower())).ToList();
-                totalVehicles = vehicleMakes.Count();
-            }
-
-            // sorting
-            switch (sortOrder)
-            {
-                case "name_desc":
-                    vehicleMakes = vehicleMakes.OrderByDescending(x => x.Name).ToList();
-                    break;
-
-                case "abrv_desc":
-                    vehicleMakes = vehicleMakes.OrderByDescending(x => x.Abbreviation).ToList();
-                    break;
-
-                default:
-                    vehicleMakes = vehicleMakes.OrderBy(x => x.Name).ToList();
-                    break;
-            }
-
-            var pagedVehicles = vehicleMakes.Skip(excludeVehicles).Take(pageSize).ToList();
-
             var vehicleResult = new PagedResult<VehicleMakeViewModel>
             {
-                Data = pagedVehicles,
+                Data = vehicleMakes,
                 TotalItems = totalVehicles,
                 PageNumber = pageNumber,
                 PageSize = pageSize
@@ -229,7 +201,7 @@ namespace Project.MVC.Controllers
         {
             await _service.DeleteVehicleMakeAsync(id);
 
-            var vehicle = new VehicleMakeViewModel { Name = ""};
+            var vehicle = new VehicleMakeViewModel { Name = "" };
             SweetAlert("Vehicle brand was successfully deleted!", NotificationType.success);
             return View(vehicle);
         }

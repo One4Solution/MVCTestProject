@@ -35,21 +35,22 @@ namespace Project.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string sortOrder, string searchString, string clearSearch, int pageNumber = 1, int pageSize = 4)
         {
-            var result = await _service.GetVehicleModelAsync();
-            var vehicles = _mapper.Map<List<VehicleModelViewModel>>(result);
-            if (vehicles == null)
-                vehicles = new List<VehicleModelViewModel>();
-            var paggedVehicles = VehiclePaginationAndSorting(sortOrder, searchString, clearSearch, pageNumber, pageSize, vehicles);
+            // define pageSize based on dropdown
+            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
+
+            var totalVehicles = await _service.GetVehicleModelTotalAsync(searchString); // get total number of vehicles based on search
+            var result = await _service.GetSortedPaggedVehicleModel(sortOrder, searchString, clearSearch, pageNumber, pageSize);
+
+            var vehicleModels = _mapper.Map<List<VehicleModelViewModel>>(result);
+
+            var paggedVehicles = VehiclePaginationAndSorting(sortOrder, searchString, clearSearch, pageNumber, pageSize, vehicleModels, totalVehicles);
 
             return View(paggedVehicles);
         }
 
         // method to return pagged vehicle models
-        public (PagedResult<VehicleModelViewModel> vehicleMake, SearchSortExClass param) VehiclePaginationAndSorting(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize, List<VehicleModelViewModel> vehicleModels)
+        public (PagedResult<VehicleModelViewModel> vehicleMake, SearchSortExClass param) VehiclePaginationAndSorting(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize, List<VehicleModelViewModel> vehicleModels, int totalVehicles)
         {
-            // define pageSize based on dropdown
-            pageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
-
             // save parameters
             _searchSortParams.CurrentSortOrder = sortOrder;
             _searchSortParams.SearchFilter = searchString;
@@ -58,49 +59,16 @@ namespace Project.MVC.Controllers
             _searchSortParams.AbrvSortParm = String.IsNullOrEmpty(sortOrder) ? "abrv_desc" : "";
             _searchSortParams.SlectionPageSize = _currentPageSize > 0 ? _currentPageSize : pageSize;
 
-            var excludeVehicles = (pageSize * pageNumber) - pageSize; // which data will not be included
-            var totalVehicles = vehicleModels.Count();
-
+            // clear serach input
             if (!String.IsNullOrEmpty(clearSearch))
             {
                 searchString = null;
                 _searchSortParams.SearchFilter = null;
-                // ViewData["SearchFilter"] = null;
             }
-
-            if (!String.IsNullOrEmpty(searchString))
-            {
-                vehicleModels = vehicleModels.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.Abbreviation.ToLower().Contains(searchString.ToLower())
-                 || x.VehicleMake.Name.ToLower().Contains(searchString.ToLower())).ToList();
-                totalVehicles = vehicleModels.Count();
-            }
-
-
-            switch (sortOrder)
-            {
-                case "name_desc":
-                    vehicleModels = vehicleModels.OrderByDescending(x => x.Name).ToList();
-                    break;
-
-                case "abrv_desc":
-                    vehicleModels = vehicleModels.OrderByDescending(x => x.Abbreviation).ToList();
-                    break;
-
-                case "brand_desc":
-                    vehicleModels = vehicleModels.OrderByDescending(x => x.VehicleMake.Name).ToList();
-                    break;
-
-                default:
-                    vehicleModels = vehicleModels.OrderBy(x => x.Name).ToList();
-                    break;
-            }
-
-
-            var pagedVehicles = vehicleModels.Skip(excludeVehicles).Take(pageSize).ToList();
 
             var vehicleResult = new PagedResult<VehicleModelViewModel>
             {
-                Data = pagedVehicles,
+                Data = vehicleModels,
                 TotalItems = totalVehicles,
                 PageNumber = pageNumber,
                 PageSize = pageSize

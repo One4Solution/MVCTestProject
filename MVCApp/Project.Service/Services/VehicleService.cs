@@ -26,6 +26,63 @@ namespace Project.Service.Services
         }
 
 
+        // method to return number of total vehicle makes
+        public async Task<int> GetVehicleMakeTotalAsync(string searchString)
+        {
+
+            if (String.IsNullOrEmpty(searchString))
+            {
+                var searchResult = await _dbCarContext.VehicleMake.AsNoTracking().Select(x => x.Id).ToListAsync();
+                return searchResult.Count();
+            }
+
+            var result = await _dbCarContext.VehicleMake.AsNoTracking().Where(x => x.Name.ToLower().Contains(searchString.ToLower())
+                            || x.Abbreviation.ToLower().Contains(searchString.ToLower())).ToListAsync();
+
+            return result.Count();
+        }
+
+
+        // method to return list of vehicles depending on sorting, filtering and pagging
+        public async Task<List<VehicleMake>> GetSortedPaggedVehicleMake(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize)
+        {
+            List<VehicleMake> vehicleMakes = new List<VehicleMake>();
+
+            // which data will not be included
+            var excludeVehicles = (pageSize * pageNumber) - pageSize;
+
+            // clear serach input
+            if (!String.IsNullOrEmpty(clearSearch))
+                searchString = null;
+
+            // check if search field is not empty
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                return await _dbCarContext.VehicleMake.AsNoTracking().Where(x => x.Name.ToLower().Contains(searchString.ToLower())
+                            || x.Abbreviation.ToLower().Contains(searchString.ToLower())).Skip(excludeVehicles).Take(pageSize).ToListAsync();
+            }
+
+            // sorting
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    vehicleMakes = await _dbCarContext.VehicleMake.AsNoTracking().OrderByDescending(x => x.Name).Skip(excludeVehicles).Take(pageSize).ToListAsync();
+                    break;
+
+                case "abrv_desc":
+                    vehicleMakes = await _dbCarContext.VehicleMake.AsNoTracking().OrderByDescending(x => x.Abbreviation).Skip(excludeVehicles).Take(pageSize).ToListAsync();
+                    break;
+
+                default:
+                    vehicleMakes = await _dbCarContext.VehicleMake.AsNoTracking().OrderBy(x => x.Name).Skip(excludeVehicles).Take(pageSize).ToListAsync();
+                    break;
+            }
+
+            return vehicleMakes;
+        }
+
+
+
         // method to create vehicle make
         public async Task CreateVehicleMakeAsync(VehicleMake vehicleMake)
         {
@@ -88,6 +145,68 @@ namespace Project.Service.Services
 
             return vehicleModels;
         }
+
+
+        // method to return number of total vehicle models
+        public async Task<int> GetVehicleModelTotalAsync(string searchString)
+        {
+            if (String.IsNullOrEmpty(searchString))
+            {
+                var searchResult = await _dbCarContext.VehicleModel.AsNoTracking().Select(x => x.Id).ToListAsync();
+                return searchResult.Count();
+            }
+
+            var result = await _dbCarContext.VehicleModel.Include(x => x.VehicleMake).AsNoTracking().Where(x => x.Name.ToLower().Contains(searchString.ToLower())
+                 || x.Abbreviation.ToLower().Contains(searchString.ToLower())
+                 || x.VehicleMake.Name.ToLower().Contains(searchString.ToLower())).ToListAsync();
+
+            return result.Count();
+        }
+
+        // method to return list of vehicles depending on sorting, filtering and pagging
+        public async Task<List<VehicleModel>> GetSortedPaggedVehicleModel(string sortOrder, string searchString, string clearSearch, int pageNumber, int pageSize)
+        {
+            List<VehicleModel> vehicleModels = new List<VehicleModel>();
+
+            // which data will not be included
+            var excludeVehicles = (pageSize * pageNumber) - pageSize;
+
+            // clear serach input
+            if (!String.IsNullOrEmpty(clearSearch))
+                searchString = null;
+
+            // check if search field is not empty
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                return await _dbCarContext.VehicleModel.Include(x => x.VehicleMake).AsNoTracking().Where(x => x.Name.ToLower().Contains(searchString.ToLower())
+                        || x.Abbreviation.ToLower().Contains(searchString.ToLower()) 
+                        || x.VehicleMake.Name.ToLower().Contains(searchString.ToLower())).Skip(excludeVehicles).Take(pageSize).ToListAsync();
+            }
+
+            // sorting
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    vehicleModels = await _dbCarContext.VehicleModel.Include(x => x.VehicleMake).AsNoTracking().OrderByDescending(x => x.Name).Skip(excludeVehicles).Take(pageSize).ToListAsync(); 
+                    break;
+
+                case "abrv_desc":
+                    vehicleModels = await _dbCarContext.VehicleModel.Include(x => x.VehicleMake).AsNoTracking().OrderByDescending(x => x.Abbreviation).Skip(excludeVehicles).Take(pageSize).ToListAsync();
+                    break;
+
+                case "brand_desc":
+                    vehicleModels = await _dbCarContext.VehicleModel.Include(x => x.VehicleMake).AsNoTracking().OrderByDescending(x => x.VehicleMake.Name).Skip(excludeVehicles).Take(pageSize).ToListAsync(); 
+                    break;
+
+                default:
+                    vehicleModels = await _dbCarContext.VehicleModel.Include(x => x.VehicleMake).AsNoTracking().OrderBy(x => x.Name).Skip(excludeVehicles).Take(pageSize).ToListAsync();
+                    break;
+            }
+
+            return vehicleModels;
+        }
+
+
 
 
         // method to create vehicle model
